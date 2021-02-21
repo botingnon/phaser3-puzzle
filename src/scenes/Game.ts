@@ -4,6 +4,8 @@ import { createCharacterAnims } from "../anims/CharacterAnims";
 
 import * as Colors from "../const/Color";
 import { boxColorToTargetColor } from "../utils/ColorUtils";
+import { Direction } from "../const/Direction";
+import { offsetForDirection } from "../utils/TileUtils";
 
 export default class Game extends Phaser.Scene {
   private cursors?: Phaser.Types.Input.Keyboard.CursorKeys;
@@ -121,56 +123,36 @@ export default class Game extends Phaser.Scene {
         duration: 500,
       };
 
-      this.tweensMove(
-        this.player.x - 32,
-        this.player.y + 32,
-        baseTweens,
-        () => {
-          this.player.anims.play("left", true);
-        }
-      );
+      this.tweensMove(Direction.Left, baseTweens, () => {
+        this.player.anims.play("left", true);
+      });
     } else if (justRight) {
       const baseTweens = {
         x: "+=64",
         duration: 500,
       };
 
-      this.tweensMove(
-        this.player.x + 96,
-        this.player.y + 32,
-        baseTweens,
-        () => {
-          this.player.anims.play("right", true);
-        }
-      );
+      this.tweensMove(Direction.Right, baseTweens, () => {
+        this.player.anims.play("right", true);
+      });
     } else if (justUp) {
       const baseTweens = {
         y: "-=64",
         duration: 500,
       };
 
-      this.tweensMove(
-        this.player.x + 32,
-        this.player.y - 32,
-        baseTweens,
-        () => {
-          this.player.anims.play("up", true);
-        }
-      );
+      this.tweensMove(Direction.Up, baseTweens, () => {
+        this.player.anims.play("up", true);
+      });
     } else if (justDown) {
       const baseTweens = {
         y: "+=64",
         duration: 500,
       };
 
-      this.tweensMove(
-        this.player.x + 32,
-        this.player.y + 96,
-        baseTweens,
-        () => {
-          this.player.anims.play("down", true);
-        }
-      );
+      this.tweensMove(Direction.Down, baseTweens, () => {
+        this.player.anims.play("down", true);
+      });
     } else {
       // this.player.setVelocity(0, 0);
       // const parts = this.player.anims.currentAnim.key?.split("-");
@@ -197,18 +179,37 @@ export default class Game extends Phaser.Scene {
     });
   }
 
-  private tweensMove(x: number, y: number, baseTweens: any, onStart: Function) {
-    if (this.tweens.isTweening(this.player)) {
+  private tweensMove(direction: Direction, baseTweens: any, onStart: Function) {
+    if (!this.player || this.tweens.isTweening(this.player)) {
       return;
     }
 
-    const hasWall = this.hasWallAt(x, y);
+    const x = this.player.x;
+    const y = this.player.y;
+
+    const offset = offsetForDirection(direction);
+    const ox = x + offset.x;
+    const oy = y + offset.y;
+
+    const hasWall = this.hasWallAt(ox, oy);
     if (hasWall) {
       return;
     }
 
-    const boxData = this.getBoxDataAt(x, y);
+    const boxData = this.getBoxDataAt(ox, oy);
     if (boxData) {
+      const nextOffset = offsetForDirection(direction, 2);
+      const nx = x + nextOffset.x;
+      const ny = y + nextOffset.y;
+      const nextBoxData = this.getBoxDataAt(nx, ny);
+      if (nextBoxData) {
+        return;
+      }
+
+      if (this.hasWallAt(nx, ny)) {
+        return;
+      }
+
       const { box, color: boxColor } = boxData;
       const targetColor = boxColorToTargetColor(boxColor);
       const coveredtarget = this.hasTargetAt(box.x, box.y, targetColor);
