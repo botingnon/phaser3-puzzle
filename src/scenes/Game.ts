@@ -3,7 +3,10 @@ import Phaser from "phaser";
 import { createCharacterAnims } from "../anims/CharacterAnims";
 
 import * as Colors from "../const/Color";
-import { boxColorToTargetColor } from "../utils/ColorUtils";
+import {
+  boxColorToTargetColor,
+  targetColorToBoxColor,
+} from "../utils/ColorUtils";
 import { Direction } from "../const/Direction";
 import { offsetForDirection } from "../utils/TileUtils";
 
@@ -22,14 +25,14 @@ export default class Game extends Phaser.Scene {
     createCharacterAnims(this.anims);
 
     const level = [
-      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
-      [100, 0, 0, 0, 0, 0, 0, 0, 0, 100],
-      [100, 6, 7, 8, 9, 10, 0, 0, 0, 100],
-      [100, 25, 38, 51, 64, 77, 52, 0, 0, 100],
-      [100, 0, 0, 0, 0, 0, 0, 0, 0, 100],
-      [100, 0, 0, 0, 0, 0, 0, 0, 0, 100],
-      [100, 0, 0, 0, 0, 0, 0, 0, 0, 100],
-      [100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+      [0, 0, 100, 100, 100, 0, 0, 0, 0, 0],
+      [0, 0, 100, 64, 100, 0, 0, 0, 0, 0],
+      [0, 0, 100, 0, 100, 100, 100, 100, 0, 0],
+      [100, 100, 100, 9, 0, 9, 64, 100, 0, 0],
+      [100, 64, 0, 9, 52, 100, 100, 100, 0, 0],
+      [100, 100, 100, 100, 9, 100, 0, 0, 0, 0],
+      [0, 0, 0, 100, 64, 100, 0, 0, 0, 0],
+      [0, 0, 0, 100, 100, 100, 0, 0, 0, 0],
     ];
 
     const map = this.make.tilemap({
@@ -53,7 +56,7 @@ export default class Game extends Phaser.Scene {
     this.extractBoxes(this.layer);
   }
 
-  changeTargetCoveredCountForColor(color: number, change: number) {
+  private changeTargetCoveredCountForColor(color: number, change: number) {
     if (!(color in this.targetsCoveredByColor)) {
       this.targetsCoveredByColor[color] = 0;
     }
@@ -63,7 +66,7 @@ export default class Game extends Phaser.Scene {
     console.log(this.targetsCoveredByColor);
   }
 
-  getBoxDataAt(x: number, y: number) {
+  private getBoxDataAt(x: number, y: number) {
     const keys = Object.keys(this.boxesByColor);
     for (let i = 0; i < keys.length; i++) {
       const color = keys[i];
@@ -85,7 +88,7 @@ export default class Game extends Phaser.Scene {
     return undefined;
   }
 
-  hasWallAt(x: number, y: number) {
+  private hasWallAt(x: number, y: number) {
     if (!this.layer) {
       return false;
     }
@@ -111,7 +114,7 @@ export default class Game extends Phaser.Scene {
     return tile.index === tileIndex;
   }
 
-  updatePlayer() {
+  private updatePlayer() {
     const justLeft = Phaser.Input.Keyboard.JustDown(this.cursors.left);
     const justRight = Phaser.Input.Keyboard.JustDown(this.cursors.right);
     const justUp = Phaser.Input.Keyboard.JustDown(this.cursors.up);
@@ -160,6 +163,26 @@ export default class Game extends Phaser.Scene {
     }
   }
 
+  private allTargetsCovered() {
+    const targetColors = Object.keys(this.targetsCoveredByColor);
+    for (let i = 0; i < targetColors.length; i++) {
+      const targetColor = parseInt(targetColors[i]);
+      const boxColor = targetColorToBoxColor(targetColor);
+      if (!(boxColor in this.boxesByColor)) {
+        continue;
+      }
+
+      const numBoxes = this.boxesByColor[boxColor].length;
+      const numCovered = this.targetsCoveredByColor[targetColor];
+
+      if (numCovered < numBoxes) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
   private extractBoxes(layer: Phaser.Tilemaps.TilemapLayer) {
     const boxColors = [
       Colors.BoxOrange,
@@ -176,6 +199,9 @@ export default class Game extends Phaser.Scene {
           frame: color,
         })
         .map((box) => box.setOrigin(0));
+
+      const targetColor = boxColorToTargetColor(color);
+      this.targetsCoveredByColor[targetColor] = 0;
     });
   }
 
@@ -225,6 +251,8 @@ export default class Game extends Phaser.Scene {
           if (coveredtarget) {
             this.changeTargetCoveredCountForColor(targetColor, 1);
           }
+
+          console.dir(this.allTargetsCovered());
         },
       });
     }

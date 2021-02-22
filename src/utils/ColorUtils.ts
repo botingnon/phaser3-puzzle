@@ -15,4 +15,19 @@ const boxColorToTargetColor = (boxColor: number) => {
   }
 };
 
-export { boxColorToTargetColor };
+const targetColorToBoxColor = (targetColor: number) => {
+  switch (targetColor) {
+    case Colors.TargetRed:
+      return Colors.BoxRed;
+    case Colors.TargetOrange:
+      return Colors.BoxOrange;
+    case Colors.TargetGrey:
+      return Colors.BoxGrey;
+    case Colors.TargetGreen:
+      return Colors.BoxGreen;
+    case Colors.TargetBlue:
+      return Colors.BoxBlue;
+  }
+};
+
+export { boxColorToTargetColor, targetColorToBoxColor };
