@@ -4,15 +4,13 @@ import { createCharacterAnims } from "../anims/CharacterAnims";
 import { LevelFinishedScene } from "../const/SceneKeys";
 
 import * as Colors from "../const/Color";
-import {
-  boxColorToTargetColor,
-  targetColorToBoxColor,
-} from "../utils/ColorUtils";
+import { boxColorToTargetColor } from "../utils/ColorUtils";
 import { Direction } from "../const/Direction";
 import { offsetForDirection } from "../utils/TileUtils";
 import { baseTweenForDirection } from "../utils/TweenUtils";
 
 import { sharedInstance as levels } from "../levels/LevelService";
+import isAllTargetsCovered from "../targets/isAllTargetsCovered";
 
 export default class Game extends Phaser.Scene {
   private cursors:
@@ -71,6 +69,10 @@ export default class Game extends Phaser.Scene {
     }
 
     this.targetsCoveredByColor[color] += change;
+
+    if (change) {
+      this.sound.play("confirmation");
+    }
   }
 
   private getBoxDataAt(x: number, y: number) {
@@ -146,26 +148,6 @@ export default class Game extends Phaser.Scene {
     }
   }
 
-  private allTargetsCovered() {
-    const targetColors = Object.keys(this.targetsCoveredByColor);
-    for (let i = 0; i < targetColors.length; i++) {
-      const targetColor = parseInt(targetColors[i]);
-      const boxColor = targetColorToBoxColor(targetColor);
-      if (!(boxColor in this.boxesByColor)) {
-        continue;
-      }
-
-      const numBoxes = this.boxesByColor[boxColor].length;
-      const numCovered = this.targetsCoveredByColor[targetColor];
-
-      if (numCovered < numBoxes) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
   private extractBoxes(layer: Phaser.Tilemaps.TilemapLayer) {
     const boxColors = [
       Colors.BoxOrange,
@@ -202,6 +184,7 @@ export default class Game extends Phaser.Scene {
 
     const hasWall = this.hasWallAt(ox, oy);
     if (hasWall) {
+      this.sound.play("error");
       return;
     }
 
@@ -214,10 +197,12 @@ export default class Game extends Phaser.Scene {
       const ny = y + nextOffset.y;
       const nextBoxData = this.getBoxDataAt(nx, ny);
       if (nextBoxData) {
+        this.sound.play("error");
         return;
       }
 
       if (this.hasWallAt(nx, ny)) {
+        this.sound.play("error");
         return;
       }
 
@@ -227,6 +212,8 @@ export default class Game extends Phaser.Scene {
       if (coveredtarget) {
         this.changeTargetCoveredCountForColor(targetColor, -1);
       }
+
+      this.sound.play("move");
 
       this.tweens.add({
         ...baseTween,
@@ -253,7 +240,11 @@ export default class Game extends Phaser.Scene {
     this.updateMovesCount();
     this.stopPlayerAnimation();
 
-    const LevelFinished = this.allTargetsCovered();
+    const LevelFinished = isAllTargetsCovered(
+      this.targetsCoveredByColor,
+      this.boxesByColor
+    );
+
     if (LevelFinished) {
       this.scene.start(LevelFinishedScene, {
         moves: this.movesCount,
