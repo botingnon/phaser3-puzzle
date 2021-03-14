@@ -1,7 +1,8 @@
 import * as Colors from "../const/Color";
 
-const boxColorToTargetColor = (boxColor: number) => {
+const boxColorToTargetColor = (boxColor: number): number => {
   switch (boxColor) {
+    default:
     case Colors.BoxRed:
       return Colors.TargetRed;
     case Colors.BoxOrange:
@@ -15,8 +16,9 @@ const boxColorToTargetColor = (boxColor: number) => {
   }
 };
 
-const targetColorToBoxColor = (targetColor: number) => {
+const targetColorToBoxColor = (targetColor: number): number => {
   switch (targetColor) {
+    default:
     case Colors.TargetRed:
       return Colors.BoxRed;
     case Colors.TargetOrange:

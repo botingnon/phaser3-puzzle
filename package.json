@@ -1,10 +1,12 @@
 {
-	"name": "phaser3-parcel-template",
+	"name": "phaser3-puzzle",
 	"version": "1.0.0",
 	"description": "A template project for Phaser 3 using Parceljs",
 	"scripts": {
 		"start": "parcel src/index.html -p 8000",
 		"build": "parcel build src/index.html --out-dir dist",
+		"lint": "./node_modules/.bin/eslint --color --ext .ts src",
+    	"lint:fix": "./node_modules/.bin/eslint  --fix --color --ext .ts src",
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"author": "supertommy",
@@ -25,8 +27,9 @@
 		"typescript": "^4.1.5"
 	},
 	"dependencies": {
-		"jsx-dom": "^7.0.0-beta.0",
-		"phaser": "^3.50.1"
+		"jsx-dom": "^7.0.0-beta.1",
+		"phaser": "^3.50.1",
+		"webfontloader": "^1.6.28"
 	},
 	"parcelCleanPaths": [
 		"dist"
