@@ -9,7 +9,6 @@ import { Direction } from "../const/Direction";
 import { offsetForDirection } from "../utils/TileUtils";
 import { baseTweenForDirection } from "../utils/TweenUtils";
 
-import { sharedInstance as levels } from "../levels/LevelService";
 import isAllTargetsCovered from "../targets/isAllTargetsCovered";
 
 export default class Game extends Phaser.Scene {
@@ -33,22 +32,28 @@ export default class Game extends Phaser.Scene {
     this.cursors = this.input.keyboard.createCursorKeys();
   }
 
-  create(data: { level: number } = { level: 1 }) {
+  preload() {
+    this.load.tilemapTiledJSON(
+      "tilemap",
+      `levels/level${this.currentLevel}.json`
+    );
+
+    this.load.spritesheet("tiles", "assets/sokoban_tilesheet.png", {
+      frameWidth: 64,
+      startFrame: 0,
+    });
+  }
+
+  create() {
     createCharacterAnims(this.anims);
 
-    const level = levels.getLevel(data.level);
+    const map = this.make.tilemap({ key: "tilemap" });
 
-    const map = this.make.tilemap({
-      data: level,
-      tileWidth: 64,
-      tileHeight: 64,
-    });
-
-    const tiles = map.addTilesetImage("tiles");
-    this.layer = map.createLayer(0, tiles, 0, 0);
+    const tiles = map.addTilesetImage("sokoban", "tiles");
+    this.layer = map.createLayer("Level", tiles, 0, 0);
 
     this.player = this.layer
-      .createFromTiles(52, 0, {
+      .createFromTiles(53, 0, {
         key: "tiles",
         frame: 52,
       })
@@ -60,6 +65,10 @@ export default class Game extends Phaser.Scene {
 
     this.movesCountLabel = this.add.text(540, 10, `Moves: ${this.movesCount}`, {
       fontFamily: '"Poppins"',
+    });
+
+    this.events.on(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.cache.tilemap.remove("tilemap");
     });
   }
 
@@ -107,7 +116,7 @@ export default class Game extends Phaser.Scene {
       return false;
     }
 
-    return tile.index === 100;
+    return tile.index === 101;
   }
 
   private hasTargetAt(x: number, y: number, tileIndex: number) {
@@ -120,7 +129,7 @@ export default class Game extends Phaser.Scene {
       return false;
     }
 
-    return tile.index === tileIndex;
+    return tile.index === tileIndex + 1;
   }
 
   private updatePlayer() {
@@ -159,7 +168,7 @@ export default class Game extends Phaser.Scene {
 
     boxColors.forEach((color) => {
       this.boxesByColor[color] = layer
-        .createFromTiles(color, 0, {
+        .createFromTiles(color + 1, 0, {
           key: "tiles",
           frame: color,
         })

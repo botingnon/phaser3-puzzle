@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 
 import { primaryButton, defaultButton } from "../ui/Button";
-import { sharedInstance as levels } from "../levels/LevelService";
 
 export default class LevelFinishedScene extends Phaser.Scene {
   create(d: { moves: number; currentLevel: number }) {
@@ -31,7 +30,7 @@ export default class LevelFinishedScene extends Phaser.Scene {
         this.scene.start("game", { level: data.currentLevel });
       });
 
-    if (data.currentLevel + 1 > levels.levelsCount) {
+    if (data.currentLevel + 1 > 2) {
       return;
     }
 
